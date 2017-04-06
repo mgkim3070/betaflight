@@ -53,6 +53,8 @@ static bool pidStabilisationEnabled;
 
 float axisPID_P[3], axisPID_I[3], axisPID_D[3];
 
+int test;//for test
+
 static float dT;
 
 PG_REGISTER_WITH_RESET_TEMPLATE(pidConfig_t, pidConfig, PG_PID_CONFIG, 0);
