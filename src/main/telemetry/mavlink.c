@@ -80,6 +80,7 @@
 #define TELEMETRY_MAVLINK_INITIAL_PORT_MODE MODE_TX
 #define TELEMETRY_MAVLINK_MAXRATE 50
 #define TELEMETRY_MAVLINK_DELAY ((1000 * 1000) / TELEMETRY_MAVLINK_MAXRATE)
+#define SYSID 1 //mg0417
 
 extern uint16_t rssi; // FIXME dependency on mw.c
 
@@ -209,7 +210,7 @@ void mavlinkSendSystemStatus(void)
     if (sensors(SENSOR_BARO)) onboardControlAndSensors |=  8200;
     if (sensors(SENSOR_GPS))  onboardControlAndSensors |= 16416;
 
-    mavlink_msg_sys_status_pack(0, 200, &mavMsg,
+    mavlink_msg_sys_status_pack(SYSID, 200, &mavMsg,
         // onboard_control_sensors_present Bitmask showing which onboard controllers and sensors are present.
         //Value of 0: not present. Value of 1: present. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure,
         // 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position,
@@ -247,7 +248,7 @@ void mavlinkSendSystemStatus(void)
 void mavlinkSendRCChannelsAndRSSI(void)
 {
     uint16_t msgLength;
-    mavlink_msg_rc_channels_raw_pack(0, 200, &mavMsg,
+    mavlink_msg_rc_channels_raw_pack(SYSID, 200, &mavMsg,
         // time_boot_ms Timestamp (milliseconds since system boot)
         millis(),
         // port Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows to encode more than 8 servos.
@@ -295,7 +296,7 @@ void mavlinkSendPosition(void)
         }
     }
 
-    mavlink_msg_gps_raw_int_pack(0, 200, &mavMsg,
+    mavlink_msg_gps_raw_int_pack(SYSID, 200, &mavMsg,
         // time_usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
         micros(),
         // fix_type 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
@@ -320,7 +321,7 @@ void mavlinkSendPosition(void)
     mavlinkSerialWrite(mavBuffer, msgLength);
 
     // Global position
-    mavlink_msg_global_position_int_pack(0, 200, &mavMsg,
+    mavlink_msg_global_position_int_pack(SYSID, 200, &mavMsg,
         // time_usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
         micros(),
         // lat Latitude in 1E7 degrees
@@ -347,7 +348,7 @@ void mavlinkSendPosition(void)
     msgLength = mavlink_msg_to_send_buffer(mavBuffer, &mavMsg);
     mavlinkSerialWrite(mavBuffer, msgLength);
 
-    mavlink_msg_gps_global_origin_pack(0, 200, &mavMsg,
+    mavlink_msg_gps_global_origin_pack(SYSID, 200, &mavMsg,
         // latitude Latitude (WGS84), expressed as * 1E7
         GPS_home[LAT],
         // longitude Longitude (WGS84), expressed as * 1E7
@@ -362,7 +363,7 @@ void mavlinkSendPosition(void)
 void mavlinkSendAttitude(void)
 {
     uint16_t msgLength;
-    mavlink_msg_attitude_pack(0, 200, &mavMsg,
+    mavlink_msg_attitude_pack(SYSID, 200, &mavMsg,
         // time_boot_ms Timestamp (milliseconds since system boot)
         millis(),
         // roll Roll angle (rad)
@@ -415,7 +416,7 @@ void mavlinkSendHUDAndHeartbeat(void)
     }
 #endif
 
-    mavlink_msg_vfr_hud_pack(0, 200, &mavMsg,
+    mavlink_msg_vfr_hud_pack(SYSID, 200, &mavMsg,
         // airspeed Current airspeed in m/s
         mavAirSpeed,
         // groundspeed Current ground speed in m/s
@@ -499,7 +500,7 @@ void mavlinkSendHUDAndHeartbeat(void)
         mavSystemState = MAV_STATE_STANDBY;
     }
 
-    mavlink_msg_heartbeat_pack(0, 200, &mavMsg,
+    mavlink_msg_heartbeat_pack(SYSID, 200, &mavMsg,
         // type Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
         mavSystemType,
         // autopilot Autopilot type / class. defined in MAV_AUTOPILOT ENUM
