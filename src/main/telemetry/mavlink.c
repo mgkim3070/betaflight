@@ -24,6 +24,9 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <unistd.h>
+#include <stdlib.h>
+
 #include "platform.h"
 
 #if defined(TELEMETRY) && defined(TELEMETRY_MAVLINK)
@@ -77,7 +80,7 @@
 #include "common/mavlink.h"
 #pragma GCC diagnostic pop
 
-#define TELEMETRY_MAVLINK_INITIAL_PORT_MODE MODE_TX
+#define TELEMETRY_MAVLINK_INITIAL_PORT_MODE MODE_RXTX //mg0510
 #define TELEMETRY_MAVLINK_MAXRATE 50
 #define TELEMETRY_MAVLINK_DELAY ((1000 * 1000) / TELEMETRY_MAVLINK_MAXRATE)
 #define SYSID 1 //mg0417
@@ -103,7 +106,10 @@ static const uint8_t mavRates[] = {
 
 static uint8_t mavTicks[MAXSTREAMS];
 static mavlink_message_t mavMsg;
+static mavlink_message_t mavMsg2;//mg0511
 static uint8_t mavBuffer[MAVLINK_MAX_PACKET_LEN];
+static uint8_t mavBuffer2[MAVLINK_MAX_PACKET_LEN];//mg0511
+static mavlink_status_t status;//mg0511
 static uint32_t lastMavlinkMessage = 0;
 
 static int mavlinkStreamTrigger(enum MAV_DATA_STREAM streamNum)
@@ -541,6 +547,25 @@ void processMAVLinkTelemetry(void)
     }
 }
 
+void handle_message(mavlink_message_t *msg) 
+{
+
+}//mg0511
+
+void processMAVLinkReceiver(void)
+{
+    ssize_t nread = 0;
+    uint8_t readbuf[32];
+    if((nread = read(mavlinkPort, readbuf, sizeof(readbuf))) < sizeof(readbuf)) {
+        usleep(1000);
+    }
+    for (ssize_t i = 0; i < nread; i++) {
+        if(mavlink_parse_char(mavBuffer2, readbuf[i], &mavMsg2, &status)) {
+            handle_message(&mavMsg2);
+        }
+    }
+}//mg0511
+
 void handleMAVLinkTelemetry(void)
 {
     if (!mavlinkTelemetryEnabled) {
@@ -554,6 +579,7 @@ void handleMAVLinkTelemetry(void)
     uint32_t now = micros();
     if ((now - lastMavlinkMessage) >= TELEMETRY_MAVLINK_DELAY) {
         processMAVLinkTelemetry();
+        processMAVLinkReceiver();//mg0511
         lastMavlinkMessage = now;
     }
 }
